@@ -1,6 +1,7 @@
 package com.shox.kod
 import android.app.*
 import android.content.*
+import android.content.pm.ServiceInfo
 import android.graphics.*
 import android.hardware.display.DisplayManager
 import android.media.ImageReader
@@ -31,41 +32,46 @@ class OcrService : Service() {
         val nm = getSystemService(NotificationManager::class.java)
         nm.createNotificationChannel(NotificationChannel("k", "Kod", NotificationManager.IMPORTANCE_LOW))
         val n = Notification.Builder(this, "k").setContentTitle("Kod Oquvchi faol").setSmallIcon(android.R.drawable.ic_menu_camera).build()
-        if (Build.VERSION.SDK_INT >= 29) startForeground(1, n, android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION) else startForeground(1, n)
-        wm = getSystemService(WINDOW_SERVICE) as WindowManager
-        p = WindowManager.LayoutParams(650, 220, WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
-            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON, PixelFormat.TRANSLUCENT).apply { gravity = Gravity.TOP or Gravity.START; x = 100; y = 500 }
-        box = object : FrameLayout(this) {
-            init { setWillNotDraw(false); setBackgroundColor(Color.argb(40, 0, 255, 0)) }
-            override fun dispatchDraw(c: Canvas) {
-                super.dispatchDraw(c)
-                c.drawRect(0f, 0f, width.toFloat(), height.toFloat(), Paint().apply { color = Color.GREEN; style = Paint.Style.STROKE; strokeWidth = 6f })
-                c.drawCircle(width.toFloat(), height.toFloat(), 35f, Paint().apply { color = Color.YELLOW })
-            }
-        }
-        box.addView(TextView(this).apply { text = "Surish / Kattalashtirish"; setTextColor(Color.GREEN); textSize = 11f; setPadding(10, 5, 0, 0) })
-        var ix = 0; var iy = 0; var iw = 0; var ih = 0; var tx = 0f; var ty = 0f; var rs = false
-        box.setOnTouchListener { _, e ->
-            when (e.action) {
-                MotionEvent.ACTION_DOWN -> { tx = e.rawX; ty = e.rawY; ix = p.x; iy = p.y; iw = p.width; ih = p.height; rs = (e.x > box.width - 80 && e.y > box.height - 80); true }
-                MotionEvent.ACTION_MOVE -> {
-                    val dx = (e.rawX - tx).toInt(); val dy = (e.rawY - ty).toInt()
-                    if (rs) { p.width = maxOf(200, iw + dx); p.height = maxOf(80, ih + dy) } else { p.x = ix + dx; p.y = iy + dy }
-                    wm.updateViewLayout(box, p); true
+        if (Build.VERSION.SDK_INT >= 29) startForeground(1, n, ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION) else startForeground(1, n)
+        try {
+            wm = getSystemService(WINDOW_SERVICE) as WindowManager
+            p = WindowManager.LayoutParams(650, 220, WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON, PixelFormat.TRANSLUCENT).apply { gravity = Gravity.TOP or Gravity.START; x = 100; y = 500 }
+            box = object : FrameLayout(this) {
+                init { setWillNotDraw(false); setBackgroundColor(Color.argb(55, 0, 255, 0)) }
+                override fun dispatchDraw(c: Canvas) {
+                    super.dispatchDraw(c)
+                    c.drawRect(0f, 0f, width.toFloat(), height.toFloat(), Paint().apply { color = Color.GREEN; style = Paint.Style.STROKE; strokeWidth = 8f })
+                    c.drawCircle(width.toFloat(), height.toFloat(), 35f, Paint().apply { color = Color.YELLOW })
                 }
-                else -> false
             }
-        }
-        wm.addView(box, p)
+            box.addView(TextView(this).apply { text = "Surish / Kattalashtirish"; setTextColor(Color.WHITE); textSize = 12f; setPadding(12, 6, 0, 0) })
+            var ix = 0; var iy = 0; var iw = 0; var ih = 0; var tx = 0f; var ty = 0f; var rs = false
+            box.setOnTouchListener { _, e ->
+                when (e.action) {
+                    MotionEvent.ACTION_DOWN -> { tx = e.rawX; ty = e.rawY; ix = p.x; iy = p.y; iw = p.width; ih = p.height; rs = (e.x > box.width - 80 && e.y > box.height - 80); true }
+                    MotionEvent.ACTION_MOVE -> {
+                        val dx = (e.rawX - tx).toInt(); val dy = (e.rawY - ty).toInt()
+                        if (rs) { p.width = maxOf(200, iw + dx); p.height = maxOf(80, ih + dy) } else { p.x = ix + dx; p.y = iy + dy }
+                        wm.updateViewLayout(box, p); true
+                    }
+                    else -> false
+                }
+            }
+            wm.addView(box, p)
+        } catch (e: Exception) { Toast.makeText(this, "Xato: " + e.message, Toast.LENGTH_LONG).show() }
     }
     override fun onStartCommand(i: Intent?, f: Int, id: Int): Int {
-        val c = i?.getIntExtra("code", Activity.RESULT_CANCELED) ?: return START_NOT_STICKY
-        val d = i.getParcelableExtra<Intent>("data") ?: return START_NOT_STICKY
-        proj = (getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager).getMediaProjection(c, d)
-        val dm = resources.displayMetrics
-        reader = ImageReader.newInstance(dm.widthPixels, dm.heightPixels, PixelFormat.RGBA_8888, 2)
-        proj?.createVirtualDisplay("K", dm.widthPixels, dm.heightPixels, dm.densityDpi, DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR, reader?.surface, null, null)
-        h.postDelayed(task, 1000); return START_STICKY
+        try {
+            val c = i?.getIntExtra("code", Activity.RESULT_CANCELED) ?: return START_NOT_STICKY
+            val d = i.getParcelableExtra<Intent>("data") ?: return START_NOT_STICKY
+            proj = (getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager).getMediaProjection(c, d)
+            val dm = resources.displayMetrics
+            reader = ImageReader.newInstance(dm.widthPixels, dm.heightPixels, PixelFormat.RGBA_8888, 2)
+            proj?.createVirtualDisplay("K", dm.widthPixels, dm.heightPixels, dm.densityDpi, DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR, reader?.surface, null, null)
+            h.postDelayed(task, 1000)
+        } catch (e: Exception) { Toast.makeText(this, "Eqran xato: " + e.message, Toast.LENGTH_LONG).show() }
+        return START_STICKY
     }
     private val task = object : Runnable {
         override fun run() {
@@ -112,5 +118,5 @@ class OcrService : Service() {
             } catch (_: Exception) {}
         }.start()
     }
-    override fun onDestroy() { h.removeCallbacks(task); proj?.stop(); wm.removeView(box); super.onDestroy() }
+    override fun onDestroy() { h.removeCallbacks(task); proj?.stop(); try { wm.removeView(box) } catch (_: Exception) {}; super.onDestroy() }
 }
