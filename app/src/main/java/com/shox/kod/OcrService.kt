@@ -1,7 +1,5 @@
 package com.shox.kod
 import android.app.*
-import android.content.pm.ServiceInfo
-import android.content.pm.ServiceInfo
 import android.content.*
 import android.graphics.*
 import android.hardware.display.DisplayManager
