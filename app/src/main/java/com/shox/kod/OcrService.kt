@@ -35,6 +35,7 @@ class OcrService : Service() {
         p = WindowManager.LayoutParams(650, 220, WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON, PixelFormat.TRANSLUCENT).apply { gravity = Gravity.TOP or Gravity.START; x = 100; y = 500 }
         box = object : FrameLayout(this) {
+            init { setWillNotDraw(false); setBackgroundColor(Color.argb(40, 0, 255, 0)) }
             override fun dispatchDraw(c: Canvas) {
                 super.dispatchDraw(c)
                 c.drawRect(0f, 0f, width.toFloat(), height.toFloat(), Paint().apply { color = Color.GREEN; style = Paint.Style.STROKE; strokeWidth = 6f })
