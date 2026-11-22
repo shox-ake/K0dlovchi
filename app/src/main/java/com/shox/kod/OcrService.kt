@@ -74,8 +74,7 @@ class OcrService : Service() {
     private fun scan() {
         val img = reader?.acquireLatestImage() ?: return
         try {
-            val pl = img.planes[0]
-            val bmp = Bitmap.createBitmap(img.width + (pl.rowStride - pl.pixelStride * img.width) / pl.pixelStride, img.height, Bitmap.Config.ARGB_8888)
+            val pl = img.planes[0]; val bmp = Bitmap.createBitmap(img.width + (pl.rowStride - pl.pixelStride * img.width) / pl.pixelStride, img.height, Bitmap.Config.ARGB_8888)
             bmp.copyPixelsFromBuffer(pl.buffer)
             val loc = IntArray(2); box.getLocationOnScreen(loc)
             val x = maxOf(0, loc[0]); val y = maxOf(0, loc[1])
