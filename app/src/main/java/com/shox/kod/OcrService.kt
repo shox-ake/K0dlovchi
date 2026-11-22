@@ -31,7 +31,7 @@ class OcrService : Service() {
         val nm = getSystemService(NotificationManager::class.java)
         nm.createNotificationChannel(NotificationChannel("k", "Kod", NotificationManager.IMPORTANCE_LOW))
         val n = Notification.Builder(this, "k").setContentTitle("Kod Oquvchi faol").setSmallIcon(android.R.drawable.ic_menu_camera).build()
-        if (Build.VERSION.SDK_INT >= 29) startForeground(1, n, ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION) else startForeground(1, n)
+        if (Build.VERSION.SDK_INT >= 29) startForeground(1, n, android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION) else startForeground(1, n)
         wm = getSystemService(WINDOW_SERVICE) as WindowManager
         p = WindowManager.LayoutParams(650, 220, WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON, PixelFormat.TRANSLUCENT).apply { gravity = Gravity.TOP or Gravity.START; x = 100; y = 500 }
