@@ -74,18 +74,19 @@ class OcrService : Service() {
     private fun scan() {
         val img = reader?.acquireLatestImage() ?: return
         try {
-            val pl = img.planes; val bmp = Bitmap.createBitmap(img.width + (pl.rowStride - pl.pixelStride * img.width) / pl.pixelStride, img.height, Bitmap.Config.ARGB_8888)
+            val pl = img.planes[0]
+            val bmp = Bitmap.createBitmap(img.width + (pl.rowStride - pl.pixelStride * img.width) / pl.pixelStride, img.height, Bitmap.Config.ARGB_8888)
             bmp.copyPixelsFromBuffer(pl.buffer)
             val loc = IntArray(2); box.getLocationOnScreen(loc)
-            val x = maxOf(0, loc); val y = maxOf(0, loc)
+            val x = maxOf(0, loc[0]); val y = maxOf(0, loc[1])
             val w = minOf(box.width, bmp.width - x); val h = minOf(box.height, bmp.height - y)
             if (w <= 20 || h <= 20) return
             val crop = Bitmap.createBitmap(bmp, x, y, w, h)
             val px = IntArray(w * h); crop.getPixels(px, 0, w, 0, 0, w, h); val hsv = FloatArray(3)
             for (i in px.indices) {
                 Color.colorToHSV(px[i], hsv)
-                val gold = (hsv in 28f..68f) && (hsv > 0.35f) && (hsv > 0.45f)
-                val white = (hsv < 0.25f) && (hsv > 0.75f)
+                val gold = (hsv[0] in 28f..68f) && (hsv[1] > 0.35f) && (hsv[2] > 0.45f)
+                val white = (hsv[1] < 0.25f) && (hsv[2] > 0.75f)
                 px[i] = if (gold || white) Color.BLACK else Color.WHITE
             }
             ocr.process(InputImage.fromBitmap(Bitmap.createBitmap(px, w, h, Bitmap.Config.ARGB_8888), 0)).addOnSuccessListener { t ->
